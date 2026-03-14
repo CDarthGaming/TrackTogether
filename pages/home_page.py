@@ -1,6 +1,6 @@
 import streamlit as st
 
-st.Page("home_page.py")
+st.Page("pages/home_page.py")
 
 st.set_page_config(
     page_title="Assignment Tracker",

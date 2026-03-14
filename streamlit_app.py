@@ -47,12 +47,6 @@ def login_page():
             else:
                 st.error("Invalid username or password")
 
-pg = st.navigation([
-    st.Page(login_page, title = "Login"),
-    st.Page("pages/home_page.py", title = "Home Page"),
-    st.Page("pages/create_account.py", title = "Create Account"),
-    st.Page("pages/my_profile.py", title = "My Profile")
-])
 
-pg.run()
+login_page()
 
