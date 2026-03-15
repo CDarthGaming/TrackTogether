@@ -2,7 +2,7 @@
 
 Created by Aparna, Tabitha, & Tristan.
 
-A website application built during the **[Lancashire Hackathon 2026]**.
+A website application built during the **Lancashire Hackathon 2026**.
 
 This project was developed within 1.5 days to demonstrate a solution to 1 of 2 prompts:
 I.  Make a study tool for students.
