@@ -91,5 +91,3 @@ with st.form("add_assignment_form"):
         st.toast("Assignment successfully added! Good luck!", icon="✏️")
         time.sleep(1)
         st.rerun()
-    else:
-        st.toast("Error, couldn't create an assignment. Please check your details or contact an admin!", icon="‼️")
