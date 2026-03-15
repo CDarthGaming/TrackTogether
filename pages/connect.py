@@ -5,6 +5,7 @@ import sys
 sys.path.append(".")
 from header import show_header
  
+# Sets the page layout.
 st.set_page_config(
     page_title="Assignment Tracker",
     page_icon="👾",
@@ -17,6 +18,7 @@ st.set_page_config(
  
 show_header()
  
+# Gets the user ID from the session storage.
 user_id = st.session_state.get("user_id")
 
 if (user_id == None):
