@@ -90,4 +90,4 @@ with st.form("add_assignment_form"):
         add_assignment(assignment_name, module_name, module_code, start_date, due_date, userID)
         st.toast("Assignment successfully added! Good luck!", icon="✏️")
         time.sleep(1)
-        st.rerun()
+        st.switch_page("pages/view_assignments.py")

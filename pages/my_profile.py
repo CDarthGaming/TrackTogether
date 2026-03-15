@@ -19,7 +19,6 @@ show_header()
 
 conn = sqlite3.connect("users.db")
 cursor = conn.cursor()
-
 user_id = st.session_state['user_id']
 
 if 'user_id' not in st.session_state:

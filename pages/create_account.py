@@ -40,3 +40,9 @@ with st.form("register_form"):
     submitted = st.form_submit_button("Submit")
     if submitted:
         st.write("Thank you for creating an account!")
+
+# ---------------------------------------------------
+# Return button
+# ---------------------------------------------------
+if st.button("Return to Login page"):
+    st.switch_page("streamlit_app.py")
