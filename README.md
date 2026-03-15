@@ -1,4 +1,4 @@
-# [Track Together]
+# Track Together
 
 Created by Aparna, Tabitha, & Tristan.
 
