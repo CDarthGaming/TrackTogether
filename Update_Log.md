@@ -1,3 +1,5 @@
+[Back to Main GitHub Page](https://github.com/CDarthGaming/TrackTogether/tree/main)
+
 # Major System Overhaul - Version 1.1
 
 Implemented full student assignment tracking including task management, progress tracking, grading, and major system infrastructure improvements.
