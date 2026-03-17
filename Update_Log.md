@@ -1,16 +1,14 @@
 [Back to Main GitHub Page](https://github.com/CDarthGaming/TrackTogether/tree/main)
 
-# Minor Patch - Version 1.1.2
-
+## Minor Patch - Version 1.1.2
 * Added caption notices to the bottomn of the login & home pages
 
-<br>
+<br> </br>
 
-# Minor Patch - Version 1.1.1
-
+## Minor Patch - Version 1.1.1
 * Fixed missing python library dependancies
 
-<br>
+<br> </br>
 
 # Major System Overhaul - Version 1.1
 
