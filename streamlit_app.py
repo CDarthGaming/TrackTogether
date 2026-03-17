@@ -1,5 +1,6 @@
 import streamlit as st
 import sqlite3
+import bcrypt
 
 st.set_page_config(
     page_title="Track Together",
@@ -36,7 +37,6 @@ def check_user(username, password):
     
     user_id, db_username, db_password, fName, sName, email, role, admin, approved, course_id, year = user
     
-    import bcrypt
     if bcrypt.checkpw(password.encode(), db_password.encode()):
         return {
             "id": user_id,
