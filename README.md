@@ -14,6 +14,12 @@ Our team built a working website that covers BOTH prompts.
 
 ---
 
+## Update Log
+
+[You can view update logs here](https://github.com/CDarthGaming/TrackTogether/blob/main/Update_Log.md)
+
+---
+
 ## Main Features
 
 - Assignment Tracker
