@@ -84,3 +84,12 @@ with st.form("login_form"):
 # ---------------------------------------------------
 if st.button("Create an account"):
     st.switch_page("pages/create_account.py")
+
+st.divider()
+
+st.caption("Only the University of Lancashire is currently compatible.")
+st.caption("Please get in touch with an admin if you would like to become an approved lecturer on the website.")
+st.caption("Please get in touch with an admin if you would like your course added to the website.")
+st.divider()
+st.caption("Currently approved admins:")
+st.badge("twalmsley5@lancashire.ac.uk")
