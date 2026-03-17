@@ -1,11 +1,22 @@
 [Back to Main GitHub Page](https://github.com/CDarthGaming/TrackTogether/tree/main)
 
+# Minor Patch - Version 1.1.2
+
+* Added caption notices to the bottomn of the login & home pages
+
+<br>
+
+# Minor Patch - Version 1.1.1
+
+* Fixed missing python library dependancies
+
+<br>
+
 # Major System Overhaul - Version 1.1
 
 Implemented full student assignment tracking including task management, progress tracking, grading, and major system infrastructure improvements.
 
 ## Student Features
-
 * Students can now view assignments automatically based on their course and year
 * Assignment progress bars based on task completion
 * Completing an assignment automatically sets progress to 100%
@@ -15,7 +26,6 @@ Implemented full student assignment tracking including task management, progress
 * Students no longer have the ability to create or modify assignments
 
 ## Lecturer System
-
 * Introduced lecturer user role
 * Lecturers must now be approved before gaining access
 * Lecturers can assign themselves to modules they teach
@@ -23,7 +33,6 @@ Implemented full student assignment tracking including task management, progress
 * Lecturer-created assignments automatically appear for enrolled students
 
 ## Admin & Permissions System
-
 * Introduced admin role and permission structure
 * Admins can manage users and grant admin privileges
 * Admins can create and manage courses
@@ -31,11 +40,9 @@ Implemented full student assignment tracking including task management, progress
 * Admins control lecturer approvals and overall system configuration
 
 ## Assignment & Task System
-
 * Added per-student assignment tracking via the student_assignments table
 
 ## Database Changes
-
 * Added student_assignments table for per-student assignment tracking
 * Added progress, complete, notes, and achieved_grade fields
 * Added tasks table for assignment task management
@@ -44,7 +51,6 @@ Implemented full student assignment tracking including task management, progress
 * Improved SQL joins between users.db and modules.db
 
 ## Profile & Navigation Overhaul
-
 * Completely redesigned profile menu
 * Added profile picture support
 * Added logout functionality
@@ -52,14 +58,12 @@ Implemented full student assignment tracking including task management, progress
 * Overhauled the header/navigation layout
 
 ## UI Improvements
-
 * Added assignment weighting column
 * Improved layouts
 * Added toast / success / warning notifications for more key user actions
 * Improved assignment list readability
 
 ## Temporary Behaviour / Known Issues
-
 * Students & lecturers temporarily have access to all module chats as the connect feature has not been fully overhauled yet
 * Lecturers currently appear on the leaderboard
 * Home page progress bar is currently non-functional
