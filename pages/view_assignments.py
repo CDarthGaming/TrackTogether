@@ -1,186 +1,206 @@
 import streamlit as st
-import pandas as pd
 import sqlite3
 import time
+from datetime import datetime, date
+
 from header import show_header
 
 # ---------------------------------------------------
 # Page config
 # ---------------------------------------------------
-st.set_page_config(
-    page_title="Track Together",
-    page_icon="👾",
-    layout="wide",
-    initial_sidebar_state="expanded",
-    menu_items={
-        'About': "# Track Together. Made by Aparna, Tabitha, Tristan."
-    }
-)
-
+st.set_page_config(page_title="Track Together", page_icon="👾", layout="wide")
 show_header()
 
 # ---------------------------------------------------
-# Get user information
+# Check login
 # ---------------------------------------------------
 user_id = st.session_state.get("user_id")
-
-if (user_id == None):
-    st.switch_page("streamlit_app.py")
-
-# Connect to users database to get username
-users_conn = sqlite3.connect("users.db")
-username_query = "SELECT username FROM users WHERE id = ?"
-username_df = pd.read_sql_query(username_query, users_conn, params=(user_id,))
-
-if not username_df.empty:
-    username = username_df.iloc[0]["username"]
-    st.markdown(f"<h1 style='text-align: center;'>Upcoming Assignments - {username}</h1>", unsafe_allow_html=True)
+if not user_id:
+    st.error("You must be logged in!")
+    st.stop()
 
 # ---------------------------------------------------
-# Connect to assignments database
+# Connect databases
 # ---------------------------------------------------
-assign_conn = sqlite3.connect("assignments.db")
-
-# SQL queries
-query_active = """
-SELECT id, name, module_name, module_code, due_date, progress
-FROM assignments
-WHERE complete = 0 AND user_id = ?
-ORDER BY due_date
-"""
-
-query_completed = """
-SELECT id, name, module_name, module_code, due_date, progress
-FROM assignments
-WHERE complete = 1 AND user_id = ?
-ORDER BY due_date
-"""
-
-# Fetch assignments
-df_active = pd.read_sql_query(query_active, assign_conn, params=(user_id,))
-df_completed = pd.read_sql_query(query_completed, assign_conn, params=(user_id,))
+conn_modules = sqlite3.connect("modules.db", detect_types=sqlite3.PARSE_DECLTYPES)
+cursor_modules = conn_modules.cursor()
+cursor_modules.execute("ATTACH DATABASE 'users.db' AS users_db")
 
 # ---------------------------------------------------
-# Highlight next assignment due
+# Reminder to enter grades for completed assignments
 # ---------------------------------------------------
-if not df_active.empty:
-    next_due = df_active.iloc[0]
-    if pd.to_datetime(next_due["due_date"]).date() < pd.Timestamp.today().date():
-        st.warning(
-            f"OVERDUE deadline: **{next_due['name']}** "
-            f"({next_due['module_code']}) due {next_due['due_date']}"
+cursor_modules.execute("""
+    SELECT a.name
+    FROM assignments a
+    JOIN student_assignments sa
+        ON sa.assignment_id = a.id
+    WHERE sa.student_id=? 
+    AND sa.complete=1
+    AND (sa.achieved_grade IS NULL OR sa.achieved_grade=0)
+""", (user_id,))
+
+missing_grades = cursor_modules.fetchall()
+
+if missing_grades:
+    count = len(missing_grades)
+    st.warning(f"⚠️ {count} completed assignment(s) still need a grade entered.")
+
+    for assignment in missing_grades:
+        st.badge(f"{assignment[0]}")
+
+# ---------------------------------------------------
+# Get student info
+# ---------------------------------------------------
+cursor_modules.execute("SELECT course_id, year, fName, surname FROM users_db.users WHERE id=?", (user_id,))
+student = cursor_modules.fetchone()
+if not student:
+    st.error("Student not found!")
+    st.stop()
+
+course_id, year, fName, surname = student
+st.title(f"Assignments for {fName} {surname}")
+
+# ---------------------------------------------------
+# Fetch modules for student
+# ---------------------------------------------------
+cursor_modules.execute("""
+    SELECT m.id, m.code, m.name
+    FROM modules m
+    JOIN course_modules cm ON cm.module_id = m.id
+    WHERE cm.course_id=? AND cm.year=?
+    ORDER BY m.code
+""", (course_id, year))
+modules = cursor_modules.fetchall()
+if not modules:
+    st.info("No modules found for your course/year.")
+    st.stop()
+
+# --- populate student_assignments for this student ---
+for m_id, m_code, m_name in modules:
+    cursor_modules.execute("""
+        SELECT id FROM assignments WHERE module_id=?
+    """, (m_id,))
+    assignment_ids = [row[0] for row in cursor_modules.fetchall()]
+
+    for a_id in assignment_ids:
+        cursor_modules.execute("""
+            INSERT OR IGNORE INTO student_assignments (student_id, assignment_id, progress, complete)
+            VALUES (?, ?, 0, 0)
+        """, (user_id, a_id))
+conn_modules.commit()
+
+# ---------------------------------------------------
+# Helper: progress bar color
+# ---------------------------------------------------
+def progress_color(percent: int) -> str:
+    if percent < 40:
+        return "red"
+    elif percent < 75:
+        return "orange"
+    else:
+        return "green"
+
+# ---------------------------------------------------
+# Display assignments per module
+# ---------------------------------------------------
+for m_id, m_code, m_name in modules:
+    st.subheader(f"{m_code} - {m_name}")
+
+    cursor_modules.execute("""
+        SELECT a.id, a.name, a.start_date, a.due_date, a.weighting,
+            sa.progress, sa.complete
+        FROM assignments a
+        JOIN student_assignments sa
+            ON sa.assignment_id = a.id AND sa.student_id = ?
+        WHERE a.module_id=?
+        ORDER BY a.id
+    """, (user_id, m_id))
+
+    assignments = cursor_modules.fetchall()
+
+    if not assignments:
+        st.info("No assignments found for this module.")
+        continue
+
+    for a_id, a_name, start_date, due_date, weighting, progress, complete in assignments:
+        # Format dates
+        start_date = datetime.strptime(start_date, "%Y-%m-%d").date() if isinstance(start_date, str) else start_date
+        due_date = datetime.strptime(due_date, "%Y-%m-%d").date() if isinstance(due_date, str) else due_date
+
+        # Columns for a clean layout
+        col1, col2, col3, col4, col5, col6, col7, col8, col9 = st.columns([3, 1, 1, 1, 0.5, 0.75, 1, 1, 1])
+
+        # Assignment name + weighting
+        # conn_modules = sqlite3.connect("modules.db", detect_types=sqlite3.PARSE_DECLTYPES)
+        # cursor_modules = conn_modules.cursor()
+        # cursor_modules.execute("ATTACH DATABASE 'users.db' AS users_db")
+
+        # result = cursor_modules.execute("""
+        #     SELECT achieved_grade
+        #     FROM student_assignments
+        #     WHERE student_id=? AND assignment_id=?
+        # """, (user_id, a_id))
+
+        # if complete and (result is None or result == 0):
+        #     col1.markdown(f":red[**{a_name}**]")
+        # else:
+        #     col1.markdown(f"**{a_name}**")
+        
+        col1.markdown(f"**{a_name}** ({weighting}%)")
+
+        # Start and due dates
+        col2.markdown(f"Start: {start_date}")
+        col3.markdown(f"Due: {due_date}")
+
+        # Progress bar
+        progress_color_hex = progress_color(progress)
+        col4.markdown(
+            f"""
+            <div style="background-color:#ccc;border-radius:5px;height:12px;">
+                <div style="
+                    width:{progress}%;
+                    background-color:{progress_color_hex};
+                    height:12px;
+                    border-radius:5px;">
+                </div>
+            </div>
+            <small>{progress}%</small>
+            """,
+            unsafe_allow_html=True
         )
-        st.toast(body="You have an overdue deadline! Don't forget to submit and mark it as complete!", icon="⚠️")
-    else:
-        st.info(
-            f"Next deadline: **{next_due['name']}** "
-            f"({next_due['module_code']}) due {next_due['due_date']}"
-        )
-else:
-    st.success("You have no active assignments right now.")
-    st.toast(body="Congrats, you have no active assignments!", icon="🎉")
 
-# ---------------------------------------------------
-# Active assignments table
-# ---------------------------------------------------
-# Table header
-header_cols = st.columns([4, 3, 1.5, 1.2, 1, 0.97, 0.9, 1.2, 1.5])
-header_cols[0].write("**Name**")
-header_cols[1].write("**Module Name**")
-header_cols[2].write("**Module Code**")
-header_cols[3].write("**Due Date**")
-header_cols[4].write("**Progress**")
-header_cols[5].write("")  # View
-header_cols[6].write("")  # Edit
-header_cols[7].write("")  # Delete
-header_cols[8].write("")  # Complete
+        # View button
+        if col8.button("View", key=f"view_{a_id}"):
+            st.session_state["selected_assignment"] = a_id
+            st.switch_page("pages/view_details.py")
 
-st.divider()
+        # Complete / Uncomplete button
+        today = date.today()
+        can_complete = progress >= 75 or today >= due_date
 
-# Display each active assignment row
-for _, row in df_active.iterrows():
-    cols = st.columns([4, 3, 1.5, 1.2, 1, 0.97, 0.9, 1.2, 1.5])
-
-    # Assignment info
-    cols[0].write(row["name"])
-    cols[1].write(row["module_name"])
-    cols[2].write(row["module_code"])
-    
-    due_date = pd.to_datetime(row["due_date"])
-    if not row["progress"] < 100 and due_date < pd.Timestamp.today():
-        cols[3].markdown(f":red[{row['due_date']}]")
-    else:
-        cols[3].write(row["due_date"])
-
-    # Progress coloring
-    progress = row["progress"]
-    if progress < 40:
-        cols[4].markdown(f":red[{progress}%]")
-    elif progress < 75:
-        cols[4].markdown(f":orange[{progress}%]")
-    else:
-        cols[4].markdown(f":green[{progress}%]")
-
-    # Actions: View, Edit, Delete
-    if cols[5].button("View", key=f"view_{row['id']}"):
-        st.session_state["selected_assignment"] = row["id"]
-        st.switch_page("pages/view_details.py")
-
-    if cols[6].button("Edit", key=f"edit_{row['id']}"):
-        st.session_state["edit_assignment"] = row["id"]
-        st.switch_page("pages/edit_assignments.py")
-
-    if cols[7].button("Delete", key=f"delete_{row['id']}"):
-        cursor = assign_conn.cursor()
-        cursor.execute("DELETE FROM assignments WHERE id = ?", (row["id"],))
-        assign_conn.commit()
-        st.rerun()
-
-    # Complete button logic
-    due_date = pd.to_datetime(row["due_date"])
-    today = pd.Timestamp.today()
-    can_complete = progress >= 75 or today >= due_date
-
-    complete_key = f"complete_{row['id']}"
-    if cols[8].button("Complete", key=complete_key):
-        if can_complete:
-            cursor = assign_conn.cursor()
-            cursor.execute("UPDATE assignments SET complete = 1 WHERE id = ?", (row["id"],))
-            assign_conn.commit()
-            st.success("Assignment marked complete!")
-            st.rerun()
+        if not complete:
+            if col9.button("Complete", key=f"complete_{a_id}", disabled=not can_complete):
+                cursor_modules.execute("""
+                    UPDATE student_assignments
+                    SET complete=1, progress=100
+                    WHERE student_id=? AND assignment_id=?
+                """, (user_id, a_id))
+                conn_modules.commit()
+                st.toast("Assignment marked complete, congrats! 🎉")
+                st.balloons()
+                time.sleep(1)
+                st.toast("Once you've recieved your grade from your lecturer, click 'view' and add your grade to the system!",icon="😀")
+                time.sleep(5)
+                st.rerun()
         else:
-            st.toast("Unable to mark assignment complete!", duration=10)
-            time.sleep(0.5)
-            st.toast("You can only complete assignments that are above 74% progress or have reached their due date.", duration=13)
+            if col9.button("Uncomplete", key=f"uncomplete_{a_id}"):
+                cursor_modules.execute("""
+                    UPDATE student_assignments
+                    SET complete=0, progress=0
+                    WHERE student_id=? AND assignment_id=?
+                """, (user_id, a_id))
+                conn_modules.commit()
+                st.toast("Assignment marked incomplete.")
+                time.sleep(1)
+                st.rerun()
 
-# ---------------------------------------------------
-# Add assignment button
-# ---------------------------------------------------
-if st.button("Add Assignment", type="primary"):
-    st.switch_page("pages/add_assignments.py")
-
-st.divider()
-
-# ---------------------------------------------------
-# Completed assignments table
-# ---------------------------------------------------
-st.header("Completed Assignments")
-for _, row in df_completed.iterrows():
-    cols = st.columns([4, 3, 1.5, 1.2, 1, 0.97, 0.9, 1, 1.7])
-    cols[0].write(row["name"])
-    cols[1].write(row["module_name"])
-    cols[2].write(row["module_code"])
-    cols[3].write(row["due_date"])
-    cols[4].write(f"{row['progress']}%")
-
-    if cols[5].button("View", key=f"view_complete_{row['id']}"):
-        st.session_state["selected_assignment"] = row["id"]
-        st.switch_page("pages/view_details.py")
-
-    if cols[8].button("Uncomplete", key=f"uncomplete_{row['id']}"):
-        cursor = assign_conn.cursor()
-        cursor.execute("UPDATE assignments SET complete = 0 WHERE id = ?", (row["id"],))
-        assign_conn.commit()
-        st.success("Assignment marked incomplete!")
-        st.rerun()

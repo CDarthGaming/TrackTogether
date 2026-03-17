@@ -39,11 +39,11 @@ st.title("Choose Module Chat:")
 st.write("")
  
 # Connect to assignments database
-assign_conn = sqlite3.connect("assignments.db")
+assign_conn = sqlite3.connect("modules.db")
 cursor2 = assign_conn.cursor()
  
 # Get distinct modules for this user
-cursor2.execute("SELECT DISTINCT module_name, module_code FROM assignments WHERE user_id = ?", (user_id,))
+cursor2.execute("SELECT code, name FROM modules")
 modules = cursor2.fetchall()
 assign_conn.close()
  

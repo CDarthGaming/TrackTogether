@@ -10,3 +10,5 @@ font = "fallback-cool-font"
 baseRadius = "0.5rem"
 buttonRadius = "full"
 
+[client]
+showSidebarNavigation = false
